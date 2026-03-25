@@ -1,0 +1,518 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: AI-Agent Driven Context-Aware Release Testing System API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: requirements
+    description: Software requirements management
+  - name: analyses
+    description: Code change analysis and test generation
+  - name: feedback
+    description: Test case feedback management
+  - name: webhooks
+    description: CI/CD webhook integrations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /requirements:
+    get:
+      operationId: listRequirements
+      tags: [requirements]
+      summary: List all requirements
+      responses:
+        "200":
+          description: List of requirements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Requirement"
+    post:
+      operationId: createRequirement
+      tags: [requirements]
+      summary: Create a new requirement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRequirementBody"
+      responses:
+        "201":
+          description: Requirement created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Requirement"
+
+  /requirements/{id}:
+    get:
+      operationId: getRequirement
+      tags: [requirements]
+      summary: Get a requirement by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Requirement found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Requirement"
+        "404":
+          description: Not found
+
+  /analyses:
+    get:
+      operationId: listAnalyses
+      tags: [analyses]
+      summary: List all analyses
+      responses:
+        "200":
+          description: List of analyses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Analysis"
+    post:
+      operationId: createAnalysis
+      tags: [analyses]
+      summary: Analyze code changes and generate test cases with risk assessment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAnalysisBody"
+      responses:
+        "201":
+          description: Analysis created with test cases and risk score
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Analysis"
+
+  /analyses/{id}:
+    get:
+      operationId: getAnalysis
+      tags: [analyses]
+      summary: Get a full analysis by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Analysis with test cases and risk score
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Analysis"
+        "404":
+          description: Not found
+
+  /test-cases/{id}/feedback:
+    post:
+      operationId: submitTestCaseFeedback
+      tags: [feedback]
+      summary: Submit feedback on a test case
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedbackBody"
+      responses:
+        "200":
+          description: Feedback recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestCase"
+
+  /webhooks/github:
+    post:
+      operationId: githubWebhook
+      tags: [webhooks]
+      summary: GitHub push/PR webhook trigger
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GithubWebhookPayload"
+      responses:
+        "200":
+          description: Webhook processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Requirement:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        entities:
+          type: array
+          items:
+            type: string
+        actions:
+          type: array
+          items:
+            type: string
+        constraints:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - description
+        - entities
+        - actions
+        - constraints
+        - createdAt
+
+    CreateRequirementBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+      required:
+        - title
+        - description
+
+    TestCaseDerivedFrom:
+      type: object
+      properties:
+        requirement:
+          type: string
+          nullable: true
+          description: Exact phrase from the requirement this test covers
+        code:
+          type: string
+          nullable: true
+          description: Function or code path reference (e.g. loginWithGoogle -> verifyIdToken)
+      required:
+        - requirement
+        - code
+
+    TestCase:
+      type: object
+      properties:
+        id:
+          type: integer
+        analysisId:
+          type: integer
+        type:
+          type: string
+          enum: [functional, edge_case, negative]
+        priority:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+          description: Test execution priority based on risk signals
+        priorityReason:
+          type: string
+          nullable: true
+          description: Explanation of why this priority was assigned
+        title:
+          type: string
+        description:
+          type: string
+        steps:
+          type: array
+          items:
+            type: string
+        expectedResult:
+          type: string
+        linkedIssue:
+          type: string
+          nullable: true
+          description: The predicted failure issue this test directly validates
+        derivedFrom:
+          $ref: "#/components/schemas/TestCaseDerivedFrom"
+          nullable: true
+          description: Traceability — where this test case came from
+        relevanceScore:
+          type: number
+          nullable: true
+        feedback:
+          type: string
+          enum: [useful, not_useful]
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - analysisId
+        - type
+        - priority
+        - title
+        - description
+        - steps
+        - expectedResult
+        - createdAt
+
+    RiskScore:
+      type: object
+      properties:
+        id:
+          type: integer
+        analysisId:
+          type: integer
+        score:
+          type: number
+          description: Risk score 0-100
+        confidence:
+          type: number
+          description: Model confidence 0.0-1.0 based on available signal quality
+        level:
+          type: string
+          enum: [low, medium, high, critical]
+        explanation:
+          type: string
+        factors:
+          type: array
+          items:
+            type: string
+          description: Specific risk factors contributing to the score
+        codeChurn:
+          type: number
+        filesChanged:
+          type: integer
+        complexity:
+          type: number
+        testCoverageSignal:
+          type: number
+          description: Inferred test coverage signal 0-100 (not a reported metric — derived from churn patterns)
+        impactedModules:
+          type: array
+          items:
+            type: string
+        predictedFailures:
+          type: array
+          description: AI-predicted failure scenarios specific to this code change
+          items:
+            type: object
+            properties:
+              issue:
+                type: string
+              reason:
+                type: string
+              affected_module:
+                type: string
+              severity:
+                type: string
+                enum: [CRITICAL, HIGH, MEDIUM]
+            required:
+              - issue
+              - reason
+              - affected_module
+              - severity
+        riskBreakdown:
+          type: object
+          description: Explainable breakdown of how the risk score was calculated
+          properties:
+            changeSize:
+              type: number
+            criticalModule:
+              type: number
+            concurrencyRisk:
+              type: number
+            validationMissing:
+              type: number
+          required:
+            - changeSize
+            - criticalModule
+            - concurrencyRisk
+            - validationMissing
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - analysisId
+        - score
+        - confidence
+        - level
+        - explanation
+        - factors
+        - codeChurn
+        - filesChanged
+        - complexity
+        - testCoverageSignal
+        - impactedModules
+        - createdAt
+
+    Analysis:
+      type: object
+      properties:
+        id:
+          type: integer
+        requirementId:
+          type: integer
+          nullable: true
+        title:
+          type: string
+        gitDiff:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        testCases:
+          type: array
+          items:
+            $ref: "#/components/schemas/TestCase"
+        riskScore:
+          $ref: "#/components/schemas/RiskScore"
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - gitDiff
+        - status
+        - testCases
+        - createdAt
+
+    CreateAnalysisBody:
+      type: object
+      properties:
+        title:
+          type: string
+        gitDiff:
+          type: string
+        requirementId:
+          type: integer
+          nullable: true
+        requirementText:
+          type: string
+          nullable: true
+      required:
+        - title
+        - gitDiff
+
+    FeedbackBody:
+      type: object
+      properties:
+        feedback:
+          type: string
+          enum: [useful, not_useful]
+        relevanceScore:
+          type: number
+          minimum: 0
+          maximum: 5
+          nullable: true
+      required:
+        - feedback
+
+    GithubWebhookPayload:
+      type: object
+      properties:
+        ref:
+          type: string
+        repository:
+          type: object
+          properties:
+            full_name:
+              type: string
+          required:
+            - full_name
+        commits:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              message:
+                type: string
+              added:
+                type: array
+                items:
+                  type: string
+              removed:
+                type: array
+                items:
+                  type: string
+              modified:
+                type: array
+                items:
+                  type: string
+            required:
+              - id
+              - message
+      required:
+        - ref
+        - repository
+
+    WebhookResponse:
+      type: object
+      properties:
+        received:
+          type: boolean
+        analysisId:
+          type: integer
+          nullable: true
+        message:
+          type: string
+      required:
+        - received
+        - message
