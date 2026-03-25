@@ -1,0 +1,172 @@
+FINAL GAP ANALYSIS
+
+Right now your system:
+
+Input → LLM → Output
+
+Top-tier system:
+
+Input → Structured Understanding → Mapping → Reasoning → Output (with proof)
+
+👉 Your missing layer = structured reasoning + credibility
+
+🚨 5 FINAL CHANGES (DO THESE ONLY)
+1. 🔗 TRACEABILITY (MOST IMPORTANT)
+Problem:
+
+You generate test cases, but:
+
+No proof where they came from
+Looks like LLM guessing
+✅ Fix:
+
+Every test case must include:
+
+{
+  "title": "Reject expired Google ID token",
+  "type": "negative",
+  "derivedFrom": {
+    "requirement": "Invalid or expired tokens must be rejected",
+    "code": "loginWithGoogle -> verifyIdToken"
+  }
+}
+🔥 Why this matters:
+Shows real intelligence
+Makes system explainable
+Interviewers LOVE this
+2. 🧠 CONTEXT BUILDER (CORE UPGRADE)
+Problem:
+
+You directly send raw input to LLM
+
+✅ Fix:
+
+Before LLM call, create:
+
+{
+  "requirement_summary": [
+    "OAuth login",
+    "24-hour session",
+    "invalidate on logout"
+  ],
+  "constraints": [
+    "reject invalid tokens",
+    "handle network failure"
+  ],
+  "changed_functions": [
+    "loginWithGoogle",
+    "logout"
+  ],
+  "risk_signals": {
+    "auth_module": true,
+    "external_api": true
+  }
+}
+🔥 Why:
+
+This turns your system from:
+
+❌ prompt-based
+→ ✅ data-driven AI
+3. 📊 FIX RISK MODEL (STOP FAKING IT)
+Problem:
+coverage = 90%
+
+👉 fake → destroys credibility
+
+✅ Fix:
+
+Replace with:
+
+{
+  "risk_score": 32,
+  "confidence": 0.68,
+  "factors": [
+    "Auth module modified (critical)",
+    "External dependency (Google OAuth)",
+    "Low test coverage on new paths"
+  ]
+}
+🔥 Bonus (simple logic):
+risk =
+  churn_weight +
+  critical_module_bonus +
+  external_dependency_bonus -
+  test_coverage_signal;
+4. 🎯 TEST PRIORITIZATION
+Problem:
+
+All tests look equal
+
+✅ Fix:
+{
+  "title": "Reject invalid OAuth token",
+  "priority": "HIGH",
+  "reason": "Security-critical authentication path"
+}
+Priority Logic:
+HIGH → auth, payments, security
+MEDIUM → business logic
+LOW → performance / edge
+🔥 Why:
+
+This is real QA thinking
+
+5. ⚠️ INPUT VALIDATION + FAILURE MODE
+Problem:
+
+System always produces output
+
+✅ Fix:
+
+Bad input:
+
+hello
+
+Output:
+
+{
+  "error": "Insufficient input",
+  "message": "Provide detailed requirement and valid code diff"
+}
+🔥 Why:
+Prevents hallucination
+Makes system trustworthy
+🧪 FINAL EXPECTED OUTPUT (AFTER FIXES)
+
+For your OAuth example, your system should output:
+
+{
+  "testCases": [
+    {
+      "title": "Reject expired Google ID token",
+      "type": "negative",
+      "priority": "HIGH",
+      "derivedFrom": {
+        "requirement": "Invalid or expired tokens must be rejected",
+        "code": "loginWithGoogle -> verifyIdToken"
+      },
+      "reason": "Ensures authentication security compliance"
+    }
+  ],
+  "riskScore": {
+    "score": 42,
+    "level": "medium",
+    "confidence": 0.74,
+    "factors": [
+      "Authentication module modified",
+      "External API dependency",
+      "Session handling introduced"
+    ]
+  }
+}
+🧨 What You SHOULD NOT Add
+
+Don’t waste time on:
+
+❌ fancy UI animations
+❌ more charts
+❌ more endpoints
+❌ more generic test cases
+
+👉 Zero impact on evaluation.

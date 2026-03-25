@@ -1,0 +1,313 @@
+You’re at the stage where small tweaks won’t cut it. You need **3 things aligned perfectly**:
+
+1. **Backend logic (what to change)**
+2. **Prompt (how AI thinks)**
+3. **Output format (how it looks to judges)**
+
+Right now, yours are **disconnected**. Fix that.
+
+---
+
+# 🔧 1. WHAT CHANGES TO MAKE (High Impact Only)
+
+## ❌ Current Problem
+
+Your system is:
+
+```text
+input → generate tests → show risk (vague)
+```
+
+## ✅ Fix Architecture (MANDATORY)
+
+```text
+input
+ ↓
+impact analysis (code + requirement)
+ ↓
+risk scoring (deterministic)
+ ↓
+failure prediction (AI)
+ ↓
+test generation (based on failures)
+```
+
+---
+
+## 🔥 Add These 4 Components
+
+### 1. Impact Extractor (simple but required)
+
+Extract:
+
+* files
+* modules
+* functions
+
+---
+
+### 2. Risk Engine (NOT AI)
+
+Use formula like:
+
+```python
+risk = (
+  0.35 * change_size +
+  0.25 * critical_module +
+  0.20 * concurrency_detected +
+  0.20 * validation_missing
+)
+```
+
+---
+
+### 3. Failure Prediction Engine (AI)
+
+👉 This is your **core feature**
+
+---
+
+### 4. Test Generator (linked to failures)
+
+Each test must map to a predicted issue.
+
+---
+
+# 🧠 2. PERFECT PROMPT (COPY THIS)
+
+Use this for failure prediction:
+
+```text
+You are a senior backend reliability engineer.
+
+Analyze the following software change and predict what will break in production.
+
+Context:
+- Requirement:
+{{requirement}}
+
+- Code Changes (Git Diff):
+{{git_diff}}
+
+- Impacted Modules:
+{{modules}}
+
+Your task:
+1. Identify EXACTLY 3–5 realistic failure scenarios.
+2. Focus on:
+   - concurrency issues
+   - data consistency / partial failures
+   - idempotency problems
+   - retry logic risks
+   - API contract changes
+3. Each failure must include:
+   - issue (short title)
+   - reason (technical cause)
+   - affected_module
+   - severity (CRITICAL / HIGH / MEDIUM)
+
+STRICT RULES:
+- Do NOT be generic
+- Do NOT say "system may fail"
+- Be specific and technical
+- Tie each failure to the code change
+
+Output format (JSON only):
+[
+  {
+    "issue": "...",
+    "reason": "...",
+    "affected_module": "...",
+    "severity": "CRITICAL"
+  }
+]
+```
+
+---
+
+## 🔥 Prompt for Test Generation
+
+```text
+You are a senior QA engineer.
+
+Given the following predicted failures, generate targeted test cases.
+
+Failures:
+{{failures}}
+
+Rules:
+- Each test must directly validate one failure
+- Include:
+  - title
+  - linked_issue
+  - steps (3–5 steps)
+  - expected_result
+  - priority (based on severity)
+
+Output JSON:
+[
+  {
+    "title": "...",
+    "linked_issue": "...",
+    "priority": "HIGH",
+    "steps": ["...", "..."],
+    "expected_result": "..."
+  }
+]
+```
+
+---
+
+# 🎯 3. OUTPUT FORMAT (THIS DECIDES YOUR SCORE)
+
+## ❌ Your Current Style
+
+* scattered
+* text-heavy
+* no hierarchy
+
+---
+
+## ✅ WINNING OUTPUT STYLE
+
+### 🔴 SECTION 1 — RISK (TOP)
+
+```text
+🚨 RELEASE RISK: HIGH (87)
+❌ Recommendation: DO NOT RELEASE
+```
+
+---
+
+### ⚠️ SECTION 2 — WHAT WILL BREAK (HERO)
+
+```text
+WHAT WILL BREAK
+
+1. Double charge under concurrent requests (CRITICAL)
+   → Idempotency check is not atomic
+
+2. Partial state on failure (HIGH)
+   → Promise.all can succeed partially
+
+3. Duplicate processing via webhook retries (HIGH)
+   → Retry loop lacks idempotent protection
+```
+
+---
+
+### 📊 SECTION 3 — IMPACT
+
+```text
+Files Changed: 3
+Modules: payment, webhook, api
+
+Functions:
+- processPayment()
+- handleWebhook()
+```
+
+---
+
+### 🧪 SECTION 4 — TEST CASES (LINKED)
+
+```text
+Test: Concurrent requests with same paymentId
+→ Covers: Double charge issue
+
+Steps:
+1. Trigger 2 parallel requests
+2. Use same paymentId
+3. Check wallet balance
+
+Expected:
+Only one debit occurs
+```
+
+---
+
+### 📈 SECTION 5 — COVERAGE
+
+```text
+Before: 48%
+After: 82%
+```
+
+---
+
+### 🧠 SECTION 6 — RISK BREAKDOWN (EXPLAINABILITY)
+
+```text
+Risk Breakdown:
+- Code churn: 25
+- Critical module: 20
+- Concurrency risk: 22
+- Missing validation: 20
+
+Final Score: 87
+```
+
+---
+
+# 🧨 What Makes This “Winning”
+
+## 1. Clear Story
+
+```text
+Change → Risk → Failure → Test
+```
+
+---
+
+## 2. Feels Intelligent
+
+Even if partially simulated:
+
+* looks real
+* feels engineered
+
+---
+
+## 3. Judge-Friendly
+
+They understand in 10 seconds:
+
+* what’s wrong
+* why it matters
+* how you fix it
+
+---
+
+# ⚡ Final Checklist
+
+Before demo, ensure:
+
+* [ ] “What will break” exists
+* [ ] Risk score is explainable
+* [ ] Tests map to failures
+* [ ] Input is high-risk (important)
+* [ ] Output is structured (not messy text)
+
+---
+
+# 🏁 Final Truth
+
+You don’t need:
+
+* better AI
+* more features
+
+You need:
+
+> **tight pipeline + strong output storytelling**
+
+---
+
+If you want next:
+I’ll give you:
+
+* exact **FastAPI code for this pipeline**
+* so you can plug and run immediately
+
+Just say:
+👉 **“give backend implementation”**
