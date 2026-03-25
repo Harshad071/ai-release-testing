@@ -1,0 +1,19 @@
+packages:
+  "framer-motion": "For fluid page transitions, staggers, and gauge animations"
+  "recharts": "For rendering beautiful data visualizations and risk trends"
+  "date-fns": "For elegant date formatting in the history and dashboard views"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility to merge tailwind classes without style conflicts"
+
+images:
+  - path: "artifacts/release-testing-ui/public/images/tech-bg.png"
+    description: "Deep dark professional tech background with subtle glowing indigo and slate geometric grid lines and soft ambient light leaks, premium enterprise dashboard aesthetic"
+    aspect_ratio: "16:9"
+  - path: "artifacts/release-testing-ui/public/images/logo-mark.png"
+    description: "Minimalist geometric logo mark representing an AI brain or code analysis in glowing cyan on a completely transparent background"
+    aspect_ratio: "1:1"
+
+notes:
+  - The application defaults to dark mode to suit the professional developer tooling aesthetic.
+  - Using generated API hooks from @workspace/api-client-react.
+  - Relying on lucide-react for iconography.
