@@ -4,6 +4,6 @@ import "./index.css";
 import { setBaseUrl } from "@workspace/api-client-react";
 
 // Set API base URL
-setBaseUrl("http://localhost:4000");
+setBaseUrl("http://localhost:3000");
 
 createRoot(document.getElementById("root")!).render(<App />);
