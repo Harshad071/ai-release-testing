@@ -3,17 +3,20 @@
 A production-grade MVP that uses AI agents to analyze software requirements and code changes, automatically generating **traceable, prioritized test cases**, detecting missing scenarios, analyzing code change impact, and predicting release risk with a **confidence-scored explanation**.
 
 ---
-## 🎬 Demo
+
+
+## 🎬 Product Demo
 
 <p align="center">
   <a href="https://drive.google.com/file/d/1EMy_ZGCkMK832XDoo2780b3sp1O2uTsd/view">
-    <img src="./assets/demo-thumbnail.png" width="750"/>
+    <img src="https://github.com/Harshad071/ai-release-testing/blob/main/Screenshot%202026-03-26%20185520.png" alt="Release Sentinel Demo" width="800"/>
   </a>
 </p>
 
 <p align="center">
-  ▶️ Watch Demo (Google Drive)
+  <b>Release Sentinel in action:</b> AI-driven release risk analysis, test generation, and failure prediction.
 </p>
+
 
 ## What Makes This Different
 
