@@ -8,7 +8,7 @@ export const analysesTable = pgTable("analyses", {
   requirementId: integer("requirement_id").references(() => requirementsTable.id),
   title: text("title").notNull(),
   gitDiff: text("git_diff").notNull(),
-  status: text("status", { enum: ["pending", "parsing", "analyzing_risk", "predicting_failures", "generating_tests", "completed", "failed"] }).notNull().default("pending"),
+  status: text("status", { enum: ["pending", "processing", "parsing", "analyzing_risk", "predicting_failures", "generating_tests", "completed", "failed"] }).notNull().default("pending"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
