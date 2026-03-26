@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { analysesTable } from "@workspace/db/schema";
-import { parseGitDiff, predictRisk, generateTestCases } from "../services/ai-engine.js";
+import { parseGitDiff, predictRisk, generateTestCases, buildAnalysisContext } from "../services/ai-engine.js";
 import { testCasesTable, riskScoresTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -47,8 +47,10 @@ router.post("/github", async (req, res) => {
   (async () => {
     try {
       const diffAnalysis = parseGitDiff(pseudoDiff);
-      const riskPrediction = predictRisk(diffAnalysis);
-      const testCases = await generateTestCases(pseudoDiff, null, diffAnalysis);
+      const context = buildAnalysisContext(diffAnalysis, null);
+      const riskPrediction = predictRisk(diffAnalysis, context);
+      const failures: any[] = [];
+      const testCases = await generateTestCases(pseudoDiff, null, diffAnalysis, context, failures);
 
       await db.insert(testCasesTable).values(
         testCases.map((tc) => ({
@@ -69,7 +71,7 @@ router.post("/github", async (req, res) => {
         codeChurn: diffAnalysis.codeChurn,
         filesChanged: diffAnalysis.filesChanged,
         complexity: diffAnalysis.complexity,
-        testCoverageEstimate: riskPrediction.testCoverageEstimate,
+        testCoverageSignal: riskPrediction.testCoverageSignal,
         impactedModules: diffAnalysis.impactedModules,
       });
 
