@@ -6,13 +6,13 @@ A production-grade MVP that uses AI agents to analyze software requirements and 
 ## 🎬 Demo
 
 <p align="center">
-  <a href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID">
-    <img src="https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg" width="700"/>
+  <a href="https://drive.google.com/file/d/1EMy_ZGCkMK832XDoo2780b3sp1O2uTsd/view">
+    <img src="./assets/demo-thumbnail.png" width="750"/>
   </a>
 </p>
 
 <p align="center">
-  ▶️ Watch the full demo on YouTube
+  ▶️ Watch Demo (Google Drive)
 </p>
 
 ## What Makes This Different
