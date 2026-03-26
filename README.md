@@ -6,7 +6,9 @@ A production-grade MVP that uses AI agents to analyze software requirements and 
 
 ## Demo
 
-> 📹 **Watch the demo video:** [Release Sentinel Demo](https://your-video-link.com)
+> 📹 **Demo video coming soon**
+>
+> A walkthrough video demonstrating the Release Sentinel system will be added here.
 
 ---
 
@@ -26,11 +28,11 @@ Every test case includes **traceability** (where it came from), every test has a
 |---------|-------------|
 | **Traceability** | Every test case includes `derivedFrom.requirement` + `derivedFrom.code` — proves what it tests |
 | **Context Builder** | Structured understanding layer built before any LLM call (entities, constraints, changed functions, risk signals) |
-| **Risk Model** | Weighted score 0–100 with `confidence` (0–1) and specific `factors` — no fake coverage numbers |
+| **Risk Model** | Weighted score 0-100 with `confidence` (0-1) and specific `factors` — no fake coverage numbers |
 | **Test Prioritization** | HIGH / MEDIUM / LOW priority with reasoning per test case (auth/payment = HIGH) |
 | **Input Validation** | Bad/vague input is rejected with a clear error — prevents hallucination |
 | **Requirement Understanding** | Extracts entities, actions, and constraints from natural language |
-| **Feedback Loop** | Users mark tests as useful/not useful + 1–5 star ratings (stored for future training) |
+| **Feedback Loop** | Users mark tests as useful/not useful + 1-5 star ratings (stored for future training) |
 | **GitHub Webhook** | `POST /api/webhooks/github` triggers automatic analysis on push/PR |
 | **Dashboard UI** | Dark-mode React dashboard with risk gauge, test case viewer, tabs, history |
 | **Failure Prediction** | AI predicts potential failures based on code changes and requirements |
@@ -41,12 +43,13 @@ Every test case includes **traceability** (where it came from), every test has a
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| Frontend | React 19, Vite, Tailwind CSS v4, Framer Motion, Recharts, TanStack Query |
+|-------|-------------|
+| Frontend | React 19, Vite, Tailwind CSS v4, Framer Motion, Recharts, TanStack Query, Radix UI, Wouter |
 | Backend | Node.js, Express 5, TypeScript |
 | Database | PostgreSQL + Drizzle ORM |
-| AI | OpenAI GPT-4o / GPT-5 (via integrations) |
+| AI | OpenAI SDK (openai ^4) |
 | Validation | Zod v4, drizzle-zod |
+| Logging | Pino (pino ^9, pino-http ^10) |
 | API Contract | OpenAPI 3.1 + Orval codegen |
 | Package Manager | pnpm (monorepo with catalogs) |
 
@@ -328,8 +331,8 @@ The system automatically creates an analysis for every push, extracting changed 
 ## Evaluation Metrics
 
 - **Traceability score**: Every test case links back to a requirement phrase and code path — reviewable by humans
-- **Test case relevance**: Captured via feedback (useful/not_useful) and 1–5 star `relevance_score`, stored in DB
-- **Risk confidence**: Model confidence (0–1) based on number of detected signals
+- **Test case relevance**: Captured via feedback (useful/not_useful) and 1-5 star `relevance_score`, stored in DB
+- **Risk confidence**: Model confidence (0-1) based on number of detected signals
 - **Failure prediction accuracy**: Linked issues can be validated against actual bugs discovered
 - **All AI outputs are logged** via structured pino logging for offline analysis
 
@@ -347,8 +350,8 @@ The system automatically creates an analysis for every push, extracting changed 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/release-testing-system.git
-cd release-testing-system
+git clone https://github.com/Harshad071/ai-release-testing.git
+cd ai-release-testing
 ```
 
 ### 2. Install dependencies
@@ -365,9 +368,8 @@ Create a `.env` file (or set in your environment):
 # Database
 DATABASE_URL=postgresql://user:password@localhost:5432/release_testing
 
-# OpenAI (via integrations)
-AI_INTEGRATIONS_OPENAI_BASE_URL=https://api.openai.com/v1
-AI_INTEGRATIONS_OPENAI_API_KEY=sk-your-openai-api-key
+# OpenAI
+OPENAI_API_KEY=sk-your-openai-api-key
 
 # Server
 PORT=8080
