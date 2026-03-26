@@ -1,2 +1,20 @@
 export * from "./generated/api";
-export * from "./generated/types";
+export type {
+  Analysis,
+  AnalysisStatus,
+  FeedbackBody,
+  FeedbackBodyFeedback,
+  GithubWebhookPayload,
+  GithubWebhookPayloadCommitsItem,
+  GithubWebhookPayloadRepository,
+  HealthStatus,
+  Requirement,
+  RiskScore,
+  RiskScoreLevel,
+  TestCase,
+  TestCaseDerivedFrom,
+  TestCaseFeedback,
+  TestCasePriority,
+  TestCaseType,
+  WebhookResponse,
+} from "./generated/types";
