@@ -4,6 +4,12 @@ A production-grade MVP that uses AI agents to analyze software requirements and 
 
 ---
 
+## Demo
+
+> 📹 **Watch the demo video:** [Release Sentinel Demo](https://your-video-link.com)
+
+---
+
 ## What Makes This Different
 
 Most AI testing tools do: `Input → LLM → Output`
@@ -27,6 +33,8 @@ Every test case includes **traceability** (where it came from), every test has a
 | **Feedback Loop** | Users mark tests as useful/not useful + 1–5 star ratings (stored for future training) |
 | **GitHub Webhook** | `POST /api/webhooks/github` triggers automatic analysis on push/PR |
 | **Dashboard UI** | Dark-mode React dashboard with risk gauge, test case viewer, tabs, history |
+| **Failure Prediction** | AI predicts potential failures based on code changes and requirements |
+| **Multi-stage Analysis Pipeline** | Status tracking: pending → processing → parsing → analyzing_risk → predicting_failures → generating_tests → completed |
 
 ---
 
@@ -34,13 +42,13 @@ Every test case includes **traceability** (where it came from), every test has a
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 18, Vite, Tailwind CSS, Framer Motion, Recharts |
+| Frontend | React 19, Vite, Tailwind CSS v4, Framer Motion, Recharts, TanStack Query |
 | Backend | Node.js, Express 5, TypeScript |
 | Database | PostgreSQL + Drizzle ORM |
-| AI | OpenAI GPT-5.2 |
-| Validation | Zod, drizzle-zod |
+| AI | OpenAI GPT-4o / GPT-5 (via integrations) |
+| Validation | Zod v4, drizzle-zod |
 | API Contract | OpenAPI 3.1 + Orval codegen |
-| Package Manager | pnpm (monorepo) |
+| Package Manager | pnpm (monorepo with catalogs) |
 
 ---
 
@@ -52,8 +60,8 @@ Every test case includes **traceability** (where it came from), every test has a
 │   │   └── src/
 │   │       ├── routes/
 │   │       │   ├── health.ts
-│   │       │   ├── requirements.ts  # Requirements CRUD
-│   │       │   ├── analyses.ts      # Analysis pipeline (validation → context → LLM → risk)
+│   │       │   ├── requirements.ts  # Requirements CRUD + AI entity extraction
+│   │       │   ├── analyses.ts      # Analysis pipeline (validation → context → LLM → risk → failures → tests)
 │   │       │   ├── test-cases.ts    # Feedback endpoint
 │   │       │   └── webhooks.ts      # GitHub webhook handler
 │   │       └── services/
@@ -77,7 +85,7 @@ Every test case includes **traceability** (where it came from), every test has a
 │       ├── requirements.ts
 │       ├── analyses.ts
 │       ├── test_cases.ts            # Includes priority, derivedFrom fields
-│       └── risk_scores.ts           # Includes confidence, factors fields
+│       └── risk_scores.ts           # Includes confidence, factors, predictedFailures, riskBreakdown
 ```
 
 ---
@@ -130,12 +138,36 @@ Output includes `confidence` (based on signal count) and `factors` (specific rea
 }
 ```
 
-### 5. `generateTestCases(diff, requirement, diffAnalysis, context)` — LLM + Traceability
-Sends the structured context (not raw text) to GPT-5.2. Each returned test case includes:
+### 5. `predictFailures(gitDiff, reqText, diffAnalysis, context)` — Failure Prediction
+AI-powered prediction of potential failures based on code changes:
+```json
+[
+  {
+    "issue": "Token expiration not handled",
+    "reason": "Auth module modified but no validation added",
+    "affected_module": "authentication",
+    "severity": "HIGH"
+  }
+]
+```
+
+### 6. `generateTestCases(diff, requirement, diffAnalysis, context, failures)` — LLM + Traceability
+Sends the structured context (not raw text) to GPT. Each returned test case includes:
 - **`derivedFrom.requirement`** — exact phrase from the requirement
 - **`derivedFrom.code`** — function call chain (e.g. `loginWithGoogle -> verifyIdToken`)
 - **`priority`** — HIGH / MEDIUM / LOW (classified by `classifyPriority()`)
 - **`priorityReason`** — human-readable explanation
+- **`linkedIssue`** — links test case to predicted failure
+
+### 7. `extractRequirementEntities(description)` — Requirement Understanding
+Uses AI to extract structured entities from natural language requirements:
+```json
+{
+  "entities": ["user", "session", "token"],
+  "actions": ["login", "logout", "invalidate"],
+  "constraints": ["24-hour expiry", "reject invalid tokens"]
+}
+```
 
 ---
 
@@ -159,7 +191,8 @@ Sends the structured context (not raw text) to GPT-5.2. Each returned test case 
       "derivedFrom": {
         "requirement": "Invalid or expired tokens must be rejected",
         "code": "loginWithGoogle -> client.verifyIdToken -> throws on invalid payload"
-      }
+      },
+      "linkedIssue": "Token expiration not handled"
     }
   ],
   "riskScore": {
@@ -170,7 +203,21 @@ Sends the structured context (not raw text) to GPT-5.2. Each returned test case 
       "Authentication module modified (critical path)",
       "External API dependency introduced or modified"
     ],
-    "explanation": "Moderate risk. Changes affect 1 file with identifiable impact on: loginWithGoogle, logout. Regression tests recommended."
+    "explanation": "Moderate risk. Changes affect 1 file with identifiable impact on: loginWithGoogle, logout. Regression tests recommended.",
+    "riskBreakdown": {
+      "changeSize": 15,
+      "criticalModule": 25,
+      "concurrencyRisk": 0,
+      "validationMissing": 10
+    },
+    "predictedFailures": [
+      {
+        "issue": "Token expiration not handled",
+        "reason": "Auth module modified but no validation added",
+        "affected_module": "authentication",
+        "severity": "HIGH"
+      }
+    ]
   }
 }
 ```
@@ -183,8 +230,9 @@ Sends the structured context (not raw text) to GPT-5.2. Each returned test case 
 -- requirements: natural language feature descriptions
 requirements (id, title, description, entities[], actions[], constraints[], created_at)
 
--- analyses: each code review session
+-- analyses: each code review session (with multi-stage status tracking)
 analyses (id, requirement_id, title, git_diff, status, created_at)
+-- status: pending | processing | parsing | analyzing_risk | predicting_failures | generating_tests | completed | failed
 
 -- test_cases: AI-generated tests with traceability + priority
 test_cases (
@@ -192,16 +240,20 @@ test_cases (
   title, description, steps[], expected_result,
   derived_from_requirement,   -- traceability: requirement phrase
   derived_from_code,          -- traceability: code function chain
+  linked_issue,               -- links to predicted failure
   relevance_score, feedback, created_at
 )
 
--- risk_scores: ML-predicted risk with confidence + factors
+-- risk_scores: ML-predicted risk with confidence + factors + failures
 risk_scores (
   id, analysis_id, score, confidence, level, explanation,
   factors[],                  -- specific contributing factors
   code_churn, files_changed, complexity,
-  test_coverage_signal,       -- inferred (not reported), based on churn patterns
-  impacted_modules[], created_at
+  test_coverage_signal,       -- inferred based on churn patterns
+  impacted_modules[],
+  predicted_failures[],        -- AI-predicted potential failures
+  risk_breakdown{},           -- detailed risk component breakdown
+  created_at
 )
 ```
 
@@ -218,8 +270,18 @@ risk_scores (
 | GET | `/api/analyses` | List all analyses |
 | POST | `/api/analyses` | Submit diff for full AI analysis |
 | GET | `/api/analyses/:id` | Full result: test cases + risk score |
-| POST | `/api/test-cases/:id/feedback` | Submit feedback (useful/not_useful + star rating) |
+| POST | `/api/test-cases/:id/feedback` | Submit feedback (useful/not_useful + relevance score) |
 | POST | `/api/webhooks/github` | GitHub push webhook trigger |
+
+### Analysis Status Pipeline
+
+The analysis goes through multiple stages, providing real-time progress:
+
+```
+pending → processing → parsing → analyzing_risk → predicting_failures → generating_tests → completed
+                                    ↓ (on error)
+                                  failed
+```
 
 ### Input Validation — POST `/api/analyses`
 
@@ -268,6 +330,7 @@ The system automatically creates an analysis for every push, extracting changed 
 - **Traceability score**: Every test case links back to a requirement phrase and code path — reviewable by humans
 - **Test case relevance**: Captured via feedback (useful/not_useful) and 1–5 star `relevance_score`, stored in DB
 - **Risk confidence**: Model confidence (0–1) based on number of detected signals
+- **Failure prediction accuracy**: Linked issues can be validated against actual bugs discovered
 - **All AI outputs are logged** via structured pino logging for offline analysis
 
 ---
@@ -302,7 +365,7 @@ Create a `.env` file (or set in your environment):
 # Database
 DATABASE_URL=postgresql://user:password@localhost:5432/release_testing
 
-# OpenAI
+# OpenAI (via integrations)
 AI_INTEGRATIONS_OPENAI_BASE_URL=https://api.openai.com/v1
 AI_INTEGRATIONS_OPENAI_API_KEY=sk-your-openai-api-key
 
