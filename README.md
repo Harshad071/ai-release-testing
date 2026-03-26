@@ -372,7 +372,7 @@ DATABASE_URL=postgresql://user:password@localhost:5432/release_testing
 OPENAI_API_KEY=sk-your-openai-api-key
 
 # Server
-PORT=8080
+PORT=3000
 NODE_ENV=development
 ```
 
@@ -392,7 +392,7 @@ pnpm --filter @workspace/api-server run dev
 pnpm --filter @workspace/release-testing-ui run dev
 ```
 
-API available at `http://localhost:8080/api`, frontend at `http://localhost:5173`.
+API available at `http://localhost:3000/api`, frontend at `http://localhost:5173`.
 
 ---
 
