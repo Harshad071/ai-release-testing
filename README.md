@@ -3,14 +3,17 @@
 A production-grade MVP that uses AI agents to analyze software requirements and code changes, automatically generating **traceable, prioritized test cases**, detecting missing scenarios, analyzing code change impact, and predicting release risk with a **confidence-scored explanation**.
 
 ---
+## 🎬 Demo
 
-## Demo
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=YOUR_VIDEO_ID">
+    <img src="https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg" width="700"/>
+  </a>
+</p>
 
-> 📹 **Demo video coming soon**
->
-> A walkthrough video demonstrating the Release Sentinel system will be added here.
-
----
+<p align="center">
+  ▶️ Watch the full demo on YouTube
+</p>
 
 ## What Makes This Different
 
