@@ -1,6 +1,5 @@
 import { useRoute } from "wouter";
-import { useGetAnalysis, useSubmitTestCaseFeedback } from "@workspace/api-client-react";
-import type { PredictedFailure, RiskBreakdown } from "@workspace/api-client-react";
+import { useGetAnalysis, useSubmitTestCaseFeedback, getGetAnalysisQueryKey } from "@workspace/api-client-react";
 import { Layout } from "@/components/Layout";
 import { Gauge } from "@/components/Gauge";
 import { formatScore, cn } from "@/lib/utils";
@@ -12,14 +11,29 @@ import {
   Zap, ShieldAlert, BarChart3, Bug, Link2, Download, Printer, Info
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { getGetAnalysisQueryKey } from "@workspace/api-client-react";
+import { useQueryClient, type Query } from "@tanstack/react-query";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+// ─── Types ─────────────────────────────────────────────────────────────
+
+interface PredictedFailure {
+  issue: string;
+  reason: string;
+  affected_module: string;
+  severity: "CRITICAL" | "HIGH" | "MEDIUM";
+}
+
+interface RiskBreakdown {
+  changeSize: number;
+  criticalModule: number;
+  concurrencyRisk: number;
+  validationMissing: number;
+}
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
@@ -62,11 +76,11 @@ export default function AnalysisDetail() {
   const [, params] = useRoute("/analyses/:id");
   const id = params?.id ? parseInt(params.id) : 0;
 
-  const { data: analysis, isLoading, error, refetch } = useGetAnalysis(id, { 
+  const { data: analysis, isLoading, error, refetch } = useGetAnalysis(id, {
     query: { 
       enabled: !!id,
       refetchInterval: (query) => {
-        const data = query.state.data;
+        const data = (query as any).state?.data;
         if (!data) return 1000;
         // Poll while processing, stop when completed or failed
         return data.status === "processing" || 
@@ -77,7 +91,7 @@ export default function AnalysisDetail() {
           ? 2000 
           : false;
       }
-    } 
+    }
   });
 
   // Show progress UI while analysis is processing
